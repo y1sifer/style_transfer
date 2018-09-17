@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+{% if not content_img %}
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        内容图片：<input type="file" name="content_img" /><br>
+        风格图片：<input type="file" name="style_img" />
+        <button type="submit">上传</button>
+    </form>
+{% else %}
+    <ol>
+        <li>风格图片：<img src=".{{  content_img.img.url }}" /></li>
+        <li>内容图片：<img src=".{{  style_img.img.url }}"/></li>
+    </ol>
+{% endif %}
+</body>
+</html>
