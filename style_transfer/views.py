@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from django.views import generic
 from .models import Content_image, Style_image
 from django.utils import timezone
-
+from .model.imple_transfer import StyleTransfer
 
 def index(request):
     if request.method == "POST":
@@ -40,8 +40,18 @@ def index(request):
 def showImg(request):
     content_img = Content_image.objects.order_by("-pub_time")[0]
     style_img = Style_image.objects.order_by("-pub_time")[0]
+    style_transfer = StyleTransfer('.'+content_img.img.url,'.'+style_img.img.url)
+    style_transfer.load_model()
+    img = style_transfer.transformed_image()
+    # path = '/Users/2black/2black_workspace/django_test1/mysite/style_transfer/static/style_transfer/images/result.jpg'
+    # style_transfer.save_image(img, '/Users/2black/2black_workspace/django_test1/mysite/style_transfer/static/style_transfer/images/result.jpg')
+    path = '/Users/2black/2black_workspace/django_test1/mysite/media/result.jpg'
+    style_transfer.save_image(img, path)
     content = {
         'content_img':content_img,
-        'style_img':style_img
+        'style_img':style_img,
+        'result_img_url': "/media/result.jpg"
     }
+    Content_image.objects.all().delete()
+    Style_image.objects.all().delete()
     return render(request, "style_transfer/showing.html", content)

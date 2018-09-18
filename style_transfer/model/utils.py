@@ -9,6 +9,8 @@ import torchvision.models as models
 import cv2
 import numpy as np
 from PIL import Image
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 cnn_normalization_mean = [0.485, 0.456, 0.406]

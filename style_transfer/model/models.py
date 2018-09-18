@@ -9,8 +9,8 @@ import torchvision.models as models
 import numpy as np
 from collections import defaultdict
 from collections import OrderedDict
+from .utils import *
 
-from utils import *
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -305,13 +305,14 @@ class MetaNet(nn.Module):
             self.fc_dict[name] = i
             setattr(self, 'fc{}'.format(i + 1), nn.Linear(128, params))
 
+    # ONNX 要求输出 tensor 或者 list，不能是 dict
     def forward(self, mean_std_features):
         hidden = F.relu(self.hidden(mean_std_features))
         filters = {}
         for name, i in self.fc_dict.items():
             fc = getattr(self, 'fc{}'.format(i + 1))
             filters[name] = fc(hidden[:, i * 128:(i + 1) * 128])
-        return filters
+        return list(filters.values())
 
     def forward2(self, mean_std_features):
         hidden = F.relu(self.hidden(mean_std_features))
@@ -320,6 +321,5 @@ class MetaNet(nn.Module):
             fc = getattr(self, 'fc{}'.format(i + 1))
             filters[name] = fc(hidden[:, i * 128:(i + 1) * 128])
         return filters
-
 
 

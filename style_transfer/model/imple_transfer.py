@@ -3,7 +3,7 @@ from .utils import *
 
 import os
 
-
+from matplotlib import pyplot as plt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -29,29 +29,21 @@ base = 16
 
 
 
-# vgg用于计算损失
-vgg16 = models.vgg16(pretrained=True)
-vgg16 = VGG(vgg16.features[0:23]).to(device).eval()
 
 
-# 加载生成网络和元网络
-transform_net = TransformNet(base).to(device)
-metanet = MetaNet(transform_net.get_param_dict()).to(device)
-
-class style_transfer:
+class StyleTransfer:
     def __init__(self, content_path, style_path):
         self.vgg16 = VGG(models.vgg16(pretrained=True).features[0:23]).to(device).eval()
         self.transform_net = TransformNet(base).to(device)
-        self.meta_net = MetaNet(self.transform_net.get_param_dict()).to(device)
+        self.metanet = MetaNet(self.transform_net.get_param_dict()).to(device)
         self.content_img =  read_image(content_path,target_width=256)
         self.style_img = read_image(style_path, target_width=256)
 
-    def load_img(self, path):
-        return read_image(path, target_width=256).to(device)
 
-    def load_model(self, path):
-        metanet.load_state_dict(torch.load(path+'metanet.pth'))
-        transform_net.load_state_dict(torch.load(path+'transform_net.pth'))
+
+    def load_model(self):
+        self.metanet.load_state_dict(torch.load('/Users/2black/2black_workspace/django_test1/mysite/style_transfer/model/metanet.pth', map_location=lambda storage, loc: storage))
+        self.transform_net.load_state_dict(torch.load('/Users/2black/2black_workspace/django_test1/mysite/style_transfer/model/transform_net.pth', map_location=lambda storage, loc: storage))
 
     def train(self):
         style_weight = 50
@@ -66,7 +58,7 @@ class style_transfer:
         content_dataset = torchvision.datasets.ImageFolder('../data/content/', transform=data_transform)
         trainable_params = {}
         trainable_param_shapes = {}
-        for model in [vgg16, transform_net, metanet]:
+        for model in [self.vgg16, self.transform_net, self.metanet]:
             for name, param in model.named_parameters():
                 if param.requires_grad:
                     trainable_params[name] = param
@@ -76,7 +68,7 @@ class style_transfer:
         content_data_loader = torch.utils.data.DataLoader(content_dataset, batch_size=batch_size, shuffle=True)
 
         style_image = self.style_img
-        style_features = vgg16(style_image)
+        style_features = self.vgg16(style_image)
         style_mean_std = mean_std(style_features)
 
         n_batch = 20
@@ -121,4 +113,18 @@ class style_transfer:
 
                 if batch > n_batch:
                     break
+
+
+    # 生成图片
+    def transformed_image(self):
+        features = self.vgg16(self.style_img)
+        mean_std_features = mean_std(features)
+        weights = self.metanet.forward2(mean_std_features)
+        self.transform_net.set_weights(weights)
+        transformed_image = self.transform_net(self.content_img)
+        return transformed_image
+
+    def save_image(self, image, path):
+        image = recover_image(image)
+        plt.imsave(path,image)
 
