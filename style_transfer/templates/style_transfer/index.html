@@ -1,22 +1,95 @@
+{#<!DOCTYPE html>#}
+{#<html lang="en">#}
+{#<head>#}
+{#    <meta charset="UTF-8">#}
+{#    <title>Title</title>#}
+{#</head>#}
+{#<script src="https://cdn.bootcss.com/jquery/2.1.3/jquery.js"></script>#}
+{#<body>#}
+{#    <form method="post" enctype="multipart/form-data">#}
+{#        {% csrf_token %}#}
+{#        内容图片：<input type="file" name="content_img" id="content_img"/><br>#}
+{#        风格图片：<input type="file" name="style_img" id="style_img"/>#}
+{#        <input type="button" id="submit" value="上传" onclick="UploadFile()"/>#}
+{#    </form>#}
+{#</body>#}
+{#<script>#}
+{#    function UploadFile(){#}
+{#        var content_img = $('#content_img')[0].files[0];#}
+{#        var style_img = $("#style_img")[0].files[0];#}
+{#        var form_data = new FormData();#}
+{#        form_data.append('content_img',content_img);#}
+{#        form_data.append('style_img',style_img);#}
+{#        $.ajax({#}
+{#            type:"POST",#}
+{#            url:"{% url 'style_transfer:index' %}",#}
+{#            data:form_data,#}
+{#            dataType:'json',#}
+{#            processData:false,  // 告诉jquery不转换数据#}
+{#            contentType:false,  // 告诉jquery不设置内容格式#}
+{#            success:function(data, status){#}
+{#                console.log('上传成功');#}
+{#                var dataObj = JSON.parse(data);#}
+{#                var new_img = $('<img  src = "' + data.content_img.img.url + '" />');#}
+{#                $("form").appendChild(new_img)#}
+{#                },#}
+{#            error: function (err) {#}
+{#                    console.log(err)#}
+{#                    }#}
+{#        })#}
+{#    }#}
+{#</script>#}
+{#</html>#}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title></title>
+    <script src="https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js"></script>
+    <style>
+        .upload{
+            display: inline-block;padding: 10px;
+            background-color: brown;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            left: 0;
+            z-index: 90;
+        }
+        .file{
+            width: 100px;height: 50px;opacity: 0;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            left: 0;
+            z-index: 100;
+        }
+    </style>
 </head>
 <body>
-{% if not content_img %}
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        内容图片：<input type="file" name="content_img" /><br>
-        风格图片：<input type="file" name="style_img" />
-        <button type="submit">上传</button>
+    <form id="form1" action="{% url 'style_transfer:index' %}" method="POST" enctype="multipart/form-data" target="ifm1">
+        <iframe id="ifm1" name="ifm1" style="display: none;"></iframe>
+        <input type="file" name="content_img" />
+        <input type="file" name="style_img" />
+        <input type="submit" onclick="iframeSubmit();" value="Form提交"/>
     </form>
-{% else %}
-    <ol>
-        <li>风格图片：<img src=".{{  content_img.img.url }}" /></li>
-        <li>内容图片：<img src=".{{  style_img.img.url }}"/></li>
-    </ol>
-{% endif %}
-</body>
-</html>
+
+    <div id="preview"></div>
+    <script>
+        function iframeSubmit(){
+            $('#ifm1').load(function(){
+                var text = $('#ifm1').contents().find('body').text();
+                var obj = JSON.parse(text);
+
+                $('#preview').empty();
+                var imgTag = document.createElement('img');
+                imgTag.src = "." + obj.content_img;     //访问的路径
+                $('#preview').append(imgTag);
+
+            })
+        }
+
+    </script>
