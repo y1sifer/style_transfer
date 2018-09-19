@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <title>Title</title>
 </head>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'style_transfer/style.css' %}">
 <body>
 {% if not content_img %}
     <form method="post" enctype="multipart/form-data">

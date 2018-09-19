@@ -36,14 +36,14 @@ class StyleTransfer:
         self.vgg16 = VGG(models.vgg16(pretrained=True).features[0:23]).to(device).eval()
         self.transform_net = TransformNet(base).to(device)
         self.metanet = MetaNet(self.transform_net.get_param_dict()).to(device)
-        self.content_img =  read_image(content_path,target_width=256)
-        self.style_img = read_image(style_path, target_width=256)
+        self.content_img =  read_image(content_path,target_width=256).to(device)
+        self.style_img = read_image(style_path, target_width=256).to(device)
 
 
 
     def load_model(self):
-        self.metanet.load_state_dict(torch.load('/Users/2black/2black_workspace/django_test1/mysite/style_transfer/model/metanet.pth', map_location=lambda storage, loc: storage))
-        self.transform_net.load_state_dict(torch.load('/Users/2black/2black_workspace/django_test1/mysite/style_transfer/model/transform_net.pth', map_location=lambda storage, loc: storage))
+        self.metanet.load_state_dict(torch.load("/home/egg/2black_workspace/style_transfer/style_transfer/model/metanet.pth"))
+        self.transform_net.load_state_dict(torch.load("/home/egg/2black_workspace/style_transfer/style_transfer/model/transform_net.pth"))
 
     def train(self):
         style_weight = 50
@@ -55,10 +55,10 @@ class StyleTransfer:
             transforms.ToTensor(),
             tensor_normalizer
         ])
-        content_dataset = torchvision.datasets.ImageFolder('../data/content/', transform=data_transform)
+        content_dataset = torchvision.datasets.ImageFolder('/home/egg/2black_workspace/style_transfer/data', transform=data_transform)
         trainable_params = {}
         trainable_param_shapes = {}
-        for model in [self.vgg16, self.transform_net, self.metanet]:
+        for model in [self.vgg16, self.transform_net]:
             for name, param in model.named_parameters():
                 if param.requires_grad:
                     trainable_params[name] = param
@@ -70,6 +70,8 @@ class StyleTransfer:
         style_image = self.style_img
         style_features = self.vgg16(style_image)
         style_mean_std = mean_std(style_features)
+        weights = self.metanet.forward2(mean_std(style_features))
+        self.transform_net.set_weights(weights, 0)
 
         n_batch = 20
         with tqdm(enumerate(content_data_loader), total=n_batch) as pbar:
@@ -81,8 +83,7 @@ class StyleTransfer:
                 optimizer.zero_grad()
 
                 # 使用风格图像生成风格模型
-                weights = self.metanet.forward2(mean_std(style_features))
-                self.transform_net.set_weights(weights, 0)
+
 
                 # 使用风格模型预测风格迁移图像
                 content_images = content_images.to(device)
@@ -108,7 +109,7 @@ class StyleTransfer:
                 # 求和
                 loss = content_loss + style_loss + tv_loss
 
-                loss.backward()
+                loss.backward(retain_graph=True)
                 optimizer.step()
 
                 if batch > n_batch:

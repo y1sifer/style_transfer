@@ -42,15 +42,20 @@ def showImg(request):
     style_img = Style_image.objects.order_by("-pub_time")[0]
     style_transfer = StyleTransfer('.'+content_img.img.url,'.'+style_img.img.url)
     style_transfer.load_model()
-    img = style_transfer.transformed_image()
+    img1 = style_transfer.transformed_image()
+    style_transfer.train()
+    img2 = style_transfer.transformed_image()
     # path = '/Users/2black/2black_workspace/django_test1/mysite/style_transfer/static/style_transfer/images/result.jpg'
     # style_transfer.save_image(img, '/Users/2black/2black_workspace/django_test1/mysite/style_transfer/static/style_transfer/images/result.jpg')
-    path = '/Users/2black/2black_workspace/django_test1/mysite/media/result.jpg'
-    style_transfer.save_image(img, path)
+    path = '/home/egg/2black_workspace/style_transfer/media/'
+    style_transfer.save_image(img1, path+'result1.jpg')
+    style_transfer.save_image(img2, path+'result2.jpg')
     content = {
         'content_img':content_img,
         'style_img':style_img,
-        'result_img_url': "/media/result.jpg"
+        'result1_img_url': "/media/result1.jpg",
+        'result2_img_url': "/media/result2.jpg"
+
     }
     Content_image.objects.all().delete()
     Style_image.objects.all().delete()
